@@ -156,7 +156,6 @@ def process_request():
     participants_db = participants_db[participants_db["PARTNER"].str.contains("Edeka|Marktkauf",case=False, na=False)]
     participants_db.drop('PARTNER', axis=1, inplace=True)
     participants_db.fillna(0, inplace=True) 
-    #participants_db['ARTIKELCODE'] = participants_db['ARTIKELCODE'].astype(str).str.strip() 
     participants_db['ARTIKELBESCHREIBUNG'] = participants_db['ARTIKELBESCHREIBUNG'].astype(str).str.strip().str.lower()
     participants_db['TRANSAKTIONSDATUM'] = participants_db['TRANSAKTIONSDATUM'].str[:10]
     participants_db['TRANSAKTIONSDATUM'] = pd.to_datetime(participants_db["TRANSAKTIONSDATUM"].str[:10])
@@ -165,8 +164,6 @@ def process_request():
     # Merge DataFrames to find matches
     # By code
     matches_code = pd.merge(participants_db, off_db, left_on='ARTIKELCODE', right_on='code', how='inner') 
-    #matches_code["length"] = matches_code["code"].str.len()
-    #matches_code = matches_code[matches_code["length"]>7].drop(columns=(["length"]))
     # By name
     # Sorts the results to keep the rows with least Missing Values, more scans and most recently updated
     off_db_drop = off_db.sort_values(by=['Missing Values','unique_scans_n','last_updated_t'], ascending=[True,False,False]).drop_duplicates(['product_name'], keep='first')

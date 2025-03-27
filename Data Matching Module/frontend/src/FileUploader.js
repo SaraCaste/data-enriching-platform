@@ -1,5 +1,4 @@
-import React, { useState,useRef, useEffect } from 'react'; // Library for the UI
-import * as XLSX from 'xlsx'; // Library for xlsx operations
+import React, { useState } from 'react'; 
 import shopping_cart from './images/shopping_cart.png';
 import arrow from './images/arrow.png';
 import './Home.css'; 
@@ -7,7 +6,6 @@ import './Upload.css';
 import './Select.css'; 
 
 const FileUploader = () => {
-
   // State constants for managing UI and file data 
   const [file, setFile] = useState(null); // Stores selected file
   const [fileName, setFileName] = useState(''); // Stores the file name
@@ -15,126 +13,155 @@ const FileUploader = () => {
   const [page, setPage] = useState("0"); // Tracks sheet view for navigation
   const [error, setError] = useState(''); // Holds error message
   const [message, setMessage] = useState(''); // Stores user messages
-  const messageRef = useRef(null); // Ref for scrolling to the message
  
   /**
    * Handles file selection and validation.
    * Reads the file and extracts sheet details.
    * @param {Event} event - The file input change event
    */
-    const uploadFile = (event) => {
-      const selectedFile = event.target.files[0];
-      if (!selectedFile) return;
-  
-      // Allowed file extensions
-      const extensions = [".xlsx", ".xls"];
-      const fileExtension = selectedFile.name.split(".").pop().toLowerCase();
-  
-      // Validate file format
-      if (!extensions.includes(`.${fileExtension}`)) {
-        setError("Invalid file format. Please select an Excel file (.xlsx, .xls).");
-        setFile(null);
-        setFileName("");
-        return;
-      }
-        setFile(selectedFile); 
-        setFileName(selectedFile.name); 
-        setError(""); 
+  const uploadFile = (event) => {
+    // Get the first selected file from the file input
+    const selectedFile = event.target.files[0];
+    // If no file was selected, exit early
+    if (!selectedFile) return;
 
-          // Read the Excel file
+    // Define the allowed file extensions
+    const extensions = [".xlsx", ".xls"];
+    // Extract the extension of the selected file 
+    const fileExtension = selectedFile.name.split(".").pop().toLowerCase();
+
+    // Validate if the selected file has a valid Excel extension
+    if (!extensions.includes(`.${fileExtension}`)) {
+      // If invalid, set an error message and clear any previously selected file
+      setError("Invalid file format. Please select an Excel file (.xlsx, .xls).");
+      setFile(null);
+      setFileName("");
+      return;
+    }
+
+    // If valid, store the selected file and its name in the state
+    setFile(selectedFile);
+    setFileName(selectedFile.name);
+    // Clear any previous error message
+    setError("");
+
+    // Create a FileReader instance 
     const reader = new FileReader();
+    // Start reading the file as binary data
     reader.readAsArrayBuffer(selectedFile);
   };
-
+  
     /**
    * Sends the file to the backend for enrichment.
    * @param {Blob} fileBlob - The file data in blob format
    */
-  const callPythonFunction = async (blobi) => {
-    try {
-      const blob = new Blob([blobi], {type: "application/octet-stream"})
-      const response = await fetch("http://127.0.0.1:5000/", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/octet-stream",
-        },
-        body: blob, 
-      });
+    const callPythonFunction = async (blobi) => {
+      try {
+        // Create a Blob from the binary data to prepare it for upload
+        const blob = new Blob([blobi], { type: "application/octet-stream" });
+    
+        // Send the Blob to the Python backend via a POST request
+        const response = await fetch("http://127.0.0.1:5000/", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/octet-stream",
+          },
+          body: blob,
+        });
 
-      if (response.ok) {
-        const csvBlob = await response.blob();
-        const url = window.URL.createObjectURL(csvBlob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = "enriched_data.csv";
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-      } else {
-        console.error("Failed to fetch data from backend.");
+        if (response.ok) {
+          // If the backend responds successfully, receive the enriched CSV file as a Blob
+          const csvBlob = await response.blob();
+    
+          // Create a temporary URL for the CSV file to trigger download
+          const url = window.URL.createObjectURL(csvBlob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = "enriched_data.csv"; 
+          document.body.appendChild(a);
+          a.click(); 
+          document.body.removeChild(a); 
+        } else {
+          // Log an error if the response is not successful
+          console.error("Failed to fetch data from backend.");
+        }
+      } catch (error) {
+        // Log any unexpected errors during the request
+        console.error("Error:", error);
       }
-    } catch (error) {
-      console.error("Error:", error);
-    }
-  };
-
+    };
+  
+      // Handle error message "Continue" button click
+      const handleContinue0 = () => {
+        // Clear error state and reset file-related states
+        setError("");
+        setFile("");
+        setFileName("");
+        // Navigate back to the first page
+        setPage("1");
+      };
+  
     // Handle error message "Continue" button click
-    const onContinue0 = () => {
-      setError("");
-      setFile("");
-      setFileName("");
-      setPage("1");
+    const handleContinue = () => {
+      // Validate that a file has been selected before proceeding
+      if (!file) {
+        setError("Please choose a file before continuing.");
+        return;
+      }
+      // Proceed to the next page
+      setPage("2");
     };
 
-  // Handle error message "Continue" button click
-  const onContinue = () => {
-    if (!file) {
-      setError('Please choose a file before continuing.');
-      return;
-    }
-    setPage("2");
-  };
+    /**
+   * Handles file file enrichment/upload process
+   */
+  const startEnrichment = async () => {
+  try {
+    // Indicate that uploading is in progress
+    setUploading(true);
+    // Clear any previous errors
+    setError("");
 
-  useEffect(() => {
-    if (uploading || message || error) {
-      messageRef.current?.scrollIntoView({ behavior: "smooth" });
-    }
-  }, [uploading, message, error]);
-  
-  // Enrich the data
-  const enrichData = async () => {
-    try {
-      setUploading(true); 
-      setError("");
+    // Create a new FileReader instance to read the file
+    const reader = new FileReader();
 
-      const reader = new FileReader();
-
-      reader.onload = async (e) => {
-        try {
-          const data = new Uint8Array(e.target.result);
-          await callPythonFunction(data); 
-          setMessage("File uploaded successfully.");
-          setPage("3");
-        } catch (err) {
-          console.error(err);
-          setMessage("Error during file processing.");
-        } finally {
-          setUploading(false);
-        }
-      };
-
-      reader.onerror = () => {
+    // Define the callback to handle successful file reading
+    reader.onload = async (e) => {
+      try {
+        // Convert the file data to a Uint8Array for binary processing
+        const data = new Uint8Array(e.target.result);
+        // Call a Python function (likely through an API) with the binary data
+        await callPythonFunction(data);
+        // Notify user of successful upload
+        setMessage("File uploaded successfully.");
+        // Navigate to the next page/step
+        setPage("3");
+      } catch (err) {
+        // Log and display any errors that occur during processing
+        console.error(err);
+        setMessage("Error during file processing.");
+      } finally {
+        // Reset uploading state regardless of success or failure
         setUploading(false);
-        setError("Error reading the file.");
-      };
+      }
+    };
 
-      reader.readAsArrayBuffer(file);
-    } catch (err) {
-      console.error(err);
-      setMessage(`Error enriching the file: ${err.message}`);
-      setUploading(false); 
-    }
-  };
+    // Define the callback to handle file reading errors
+    reader.onerror = () => {
+      // Reset uploading state and display error message
+      setUploading(false);
+      setError("Error reading the file.");
+    };
+
+    // Start reading the file as an ArrayBuffer (binary data)
+    reader.readAsArrayBuffer(file);
+  } catch (err) {
+    // Handle unexpected errors during the overall process
+    console.error(err);
+    setMessage(`Error uploading file: ${err.message}`);
+    setUploading(false);
+  }
+};
 
   return (
     <div>
@@ -203,7 +230,7 @@ const FileUploader = () => {
         <nav aria-label="Page navigation example">
             <ul className="pagination">
               <li className="page-item">
-                <button onClick={onContinue0} className="btn btn-primary">Start</button>
+                <button onClick={handleContinue0} className="btn btn-warning btn-lg">Start</button>
               </li>
             </ul>
           </nav>
@@ -218,9 +245,8 @@ const FileUploader = () => {
                 <h2>Upload: File</h2>
               </div>
               <div className="card-body">
-                <p className="card-text">Please select the <strong>Excel</strong> file sent by the participant.
-                In case you want to go to the main page click on <strong>Back</strong>.</p> 
-                <label htmlFor="choose_file_btn" className="btn btn-warning">Choose file</label>
+                <p className="card-text">Please select the <strong>Excel</strong> file donated by the consumer.</p>
+                <label htmlFor="choose_file_btn" className="btn btn-success">Choose file</label>
                 <input id="choose_file_btn" style={{display:"none"}} type="file" onChange={uploadFile}  accept=".xlsx, .xls"/>
                 {fileName && (
                   <p className="mt-3"><strong>Selected file:</strong> {fileName}</p>
@@ -233,10 +259,10 @@ const FileUploader = () => {
             <nav aria-label="Page navigation example">
               <ul className="pagination">
                 <li className="page-item-back">
-                  <button onClick={() => setPage("0")} className="page-link bg-primary text-light">Back</button>
+                  <button onClick={() => setPage("0")} className="page-link bg-warning text-dark">Back</button>
                 </li>
                 <li className="page-item-continue">
-                  <button onClick={onContinue} className="page-link bg-primary text-light">Continue</button>
+                  <button onClick={handleContinue} className="page-link bg-warning text-dark">Continue</button>
                 </li>
               </ul>
             </nav>
@@ -258,17 +284,17 @@ const FileUploader = () => {
               </div>
             </div>
 
-            <div className="row">
+              <div className="row">
               <div>
                 <nav aria-label="Page navigation example">
                   <ul className="pagination">
                     <li className="page-item-back">
-                      <button onClick={() => setPage("1")} className="page-link bg-primary text-light" disabled={uploading}>
+                      <button onClick={() => setPage("1")} className="page-link bg-warning text-dark" disabled={uploading}>
                         Back
                       </button>
                     </li>
                     <li className="page-item-continue">
-                      <button onClick={enrichData} className="page-link bg-primary text-light" type="button" disabled={uploading}>
+                      <button onClick={startEnrichment} className="page-link bg-success text-light" type="button" disabled={uploading}>
                         Start
                       </button>
                     </li>
@@ -281,12 +307,12 @@ const FileUploader = () => {
                       <div className="spinner-border text-primary" role="status">
                         <span className="sr-only"></span>
                       </div>
-                      <p>Enriching file, please wait...</p>
+                      <p>Uploading file, please wait...</p>
                     </div>
                   )}
                 </div>
 
-                <div ref={messageRef} className="mt-3">
+                <div  className="mt-3">
                   {message && <p className="alert alert-info">{message}</p>}
                   {error && <p className="alert alert-danger">{error}</p>}
                  </div>
