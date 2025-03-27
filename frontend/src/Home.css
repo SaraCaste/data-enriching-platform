@@ -1,0 +1,37 @@
+.page0 {
+  padding:0px;
+  margin-left: 0px;
+  font-family: sans-serif;
+}
+
+.masthead {
+  padding-top: 15px;
+  padding-bottom: 50px;
+  height: 430px;
+}
+
+.shopping_cart {
+  width: 80%;
+}
+
+.features {
+  padding-top: 35px;
+}
+.arrow {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+  width: 80px;
+}
+
+.page-item {
+  margin: 0;
+  position: absolute;
+  margin-left: 45%;
+  padding-bottom: 10px;
+}
+
+.btn-primary{
+  font-size: 25px;
+  width: 200px;
+}

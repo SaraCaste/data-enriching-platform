@@ -1,0 +1,15 @@
+{
+  "name": "data-enriching-platform",
+  "version": "1.0.0",
+  "scripts": {
+    "start": "concurrently \"npm run start-backend\" \"npm run start-frontend\"",
+    "start-backend": "cd backend && python app.py",
+    "start-frontend": "npm --prefix frontend start"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  },
+  "dependencies": {
+    "bootstrap": "^5.3.3"
+  }
+}
