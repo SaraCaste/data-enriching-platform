@@ -4,7 +4,8 @@
   "scripts": {
     "start": "concurrently \"npm run start-backend\" \"npm run start-frontend\"",
     "start-backend": "cd backend && python app.py",
-    "start-frontend": "npm --prefix frontend start"
+    "start-frontend": "npm --prefix frontend start",
+    "install-all": "npm install && npm install --prefix frontend && npm install --prefix backend"
   },
   "devDependencies": {
     "concurrently": "^9.1.2"
