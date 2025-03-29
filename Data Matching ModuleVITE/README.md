@@ -1,2 +1,0 @@
-# data-enriching-platform
- 
