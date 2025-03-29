@@ -1,0 +1,22 @@
+.page1 {
+  padding:0px;
+  margin-left: 0px;
+  font-family: sans-serif;
+}
+
+.card{
+  margin-top: 25px;
+  height: 430px;
+}
+
+.page-item-back {
+  margin-left: 0;
+}
+
+.page-item-continue {
+  margin-left: 620px;
+}
+
+.page-link {
+  width:120px;
+}
